@@ -1,0 +1,15 @@
+<---- DONE ----->
+quotes => requested by daddy_kota
+    !addquote [quote]
+        id - quote - streamer
+    db returns all quotes 
+
+    rng based off from length of table
+
+    bot says rng value 
+<---- DONE ----->
+
+user action history and advanced mod control and logging
+
+
+    
