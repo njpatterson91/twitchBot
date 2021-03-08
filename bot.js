@@ -1,7 +1,7 @@
 const tmi = require("tmi.js");
 const db = require("./model");
 const axios = require("axios");
-const apiKey = require("./api");
+let apiKey = "";
 const gamble = require("./helperFunctions/gamble.js");
 const rollDice = require("./helperFunctions/rollDice");
 const welcomed = [];
@@ -11,6 +11,10 @@ let dbEmotes = [];
 
 let dbQuotes = [];
 
+let dbModCommands = {};
+
+let streamerLocation = "";
+
 getAuth();
 
 let opts = {
@@ -18,7 +22,7 @@ let opts = {
     username: "",
     password: "",
   },
-  channels: ["deathxxscythe"],
+  channels: [""],
 };
 
 const client = new tmi.client(opts);
@@ -27,6 +31,12 @@ client.on("message", onMessageHandler);
 client.on("connected", onConnectedHandler);
 
 client.connect();
+
+client.on("vips", (channel, vips) => {
+  // Do your stuff.
+  console.log(channel);
+  console.log(vips);
+});
 
 setInterval(function () {
   axios
@@ -56,11 +66,12 @@ function onMessageHandler(target, context, msg, self) {
   if (self) {
     return;
   }
+  chatLog(context, msg);
 
-  if (!welcomed.includes(context["display-name"])) {
-    client.say(target, `@${context["display-name"]} Welcome to the chat!`);
-    welcomed.push(context["display-name"]);
-  }
+  // if (!welcomed.includes(context["display-name"])) {
+  //   client.say(target, `@${context["display-name"]} Welcome to the chat!`);
+  //   welcomed.push(context["display-name"]);
+  // }
 
   const cmName = msg.trim();
   // const commandNameLower = cmName.toLowerCase();
@@ -88,22 +99,76 @@ function onMessageHandler(target, context, msg, self) {
     }
   }
 
-  if (commandName[0] == "!squid") {
-    client.say(target, "Squid1 Squid3 Squid2 Squid4 ");
+  if (commandName[0] == "!addCommand") {
+    if (context.mod == true || context.badges.broadcaster == 1) {
+      commandName.shift();
+      let x = commandName.shift();
+      console.log(x);
+      console.log(commandName.join(" "));
+      let commandToInsert = commandName.join(" ");
+
+      let toInsert = {
+        commandName: x,
+        response: commandToInsert,
+        createdBy: context.username,
+      };
+
+      db.addModCommands(toInsert)
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+
+      dbModCommands[x] = commandToInsert;
+    } else {
+      client.say(target, `You are not a mod!`);
+    }
   }
 
-  if (commandName[0] == "!emote") {
-    let leNum = commandName[1];
-    let leMojiesBruv = emojiSTORM(leNum);
-    let toSay = leMojiesBruv.join(" ");
-    client.say(target, `${toSay}`);
-    console.log(context);
+  if (commandName[0] == "!commands") {
+    client.say(
+      target,
+      "Available commands !emote - takes a paramater of 1-100 and spits out random emotes, !quote - displays a random quote, !talked displays - displays messages you have sent to chat, !wathctime - displays the time you have watched in minutes, !dice - rolls a dice, !weather - takes a paramater of us zip code and displays weather, !points - displays your bot points, !shoutout - takes a parameter of a twitch username and shouts them out, !gamble - takes a parameter of bot points and gambles."
+    );
   }
+
+  // if (commandName[0] == "!squid") {
+  //   client.say(target, "Squid1 Squid3 Squid2 Squid4 ");
+  // }
+
+  if (commandName[0] == "!test") {
+    console.log(dbModCommands);
+    console.log(dbModCommands["hello"]);
+  }
+
+  if (commandName[0])
+    if (commandName[0] == "!emote") {
+      let leNum = commandName[1];
+      let leMojiesBruv = emojiSTORM(leNum);
+      let toSay = leMojiesBruv.join(" ");
+      client.say(target, `${toSay}`);
+      console.log(context);
+    }
 
   if (commandName[0] == "!quote") {
     let x = quoteRoll();
     console.log(dbQuotes[x - 1]);
     client.say(target, `\"${dbQuotes[x - 1]}\" -- Someone? Maybe? Who knows!`);
+  }
+
+  if (commandName[0] == "!talked") {
+    db.getTalked(context.username)
+      .then((item) => {
+        client.say(
+          target,
+          `${context.username} has sent ${item} messages in this channel!`
+        );
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
 
   if (commandName[0] == "!clear") {
@@ -149,19 +214,35 @@ function onMessageHandler(target, context, msg, self) {
   }
 
   if (commandName[0] == "!weather") {
-    axios
-      .get(
-        `http://api.openweathermap.org/data/2.5/weather?zip=${commandName[1]}&units=imperial&appid=${apiKey}`
-      )
-      .then((res) => {
-        client.say(
-          target,
-          `It is currently ${res.data.main.temp} degrees F in ${res.data["name"]}`
-        );
-      })
-      .catch((err) => {
-        console.log(err.message);
-      });
+    if (context.badges.broadcaster == 1) {
+      axios
+        .get(
+          `http://api.openweathermap.org/data/2.5/weather?zip=${streamerLocation}&units=imperial&appid=${apiKey}`
+        )
+        .then((res) => {
+          client.say(
+            target,
+            `It is currently ${res.data.main.temp} degrees F where ${context.username} is!`
+          );
+        })
+        .catch((err) => {
+          console.log(err.message);
+        });
+    } else {
+      axios
+        .get(
+          `http://api.openweathermap.org/data/2.5/weather?zip=${commandName[1]}&units=imperial&appid=${apiKey}`
+        )
+        .then((res) => {
+          client.say(
+            target,
+            `It is currently ${res.data.main.temp} degrees F where ${context.username} is!`
+          );
+        })
+        .catch((err) => {
+          console.log(err.message);
+        });
+    }
   }
 
   if (commandName[0] == "!points") {
@@ -170,6 +251,11 @@ function onMessageHandler(target, context, msg, self) {
   }
 
   if (commandName[0] == "!gamble") {
+    console.log(commandName[1]);
+    if (commandName[1] == undefined) {
+      client.say(target, "Please include a bet value");
+      return;
+    }
     gamble(target, context.username, commandName[1], client);
   }
 
@@ -177,8 +263,18 @@ function onMessageHandler(target, context, msg, self) {
     client.say(target, `My life`);
   }
 
-  if (commandName[0] == "!shoutout") {
-    client.say(target, `Go and check out https://twitch.tv/${commandName[1]}`);
+  if (commandName[0] == "!shoutout" || commandName[0] == "!so") {
+    if (commandName[1][0] == "@") {
+      let x = commandName[1].split("");
+      console.log(x);
+      x.shift();
+      client.say(target, `Go and check out https://twitch.tv/${x.join("")}`);
+    } else {
+      client.say(
+        target,
+        `Go and check out https://twitch.tv/${commandName[1]}`
+      );
+    }
   }
 
   if (commandName[0] == "!addquote") {
@@ -204,6 +300,9 @@ function onMessageHandler(target, context, msg, self) {
         });
     }
   }
+  if (dbModCommands[commandName[0]] != undefined) {
+    client.say(target, dbModCommands[commandName[0]]);
+  }
 }
 
 function getPoints(target, user) {
@@ -221,6 +320,9 @@ function getAuth() {
     .then((res) => {
       opts.identity.username = res[0].value;
       opts.identity.password = res[1].value;
+      opts.channels[0] = res[2].value;
+      apiKey = res[3].value;
+      streamerLocation = res[4].value;
     })
     .catch((err) => {
       console.log(err);
@@ -255,6 +357,21 @@ function quoteRoll() {
   return Math.floor(Math.random() * sides) + 1;
 }
 
+function chatLog(context, msg) {
+  let log = {
+    user: context.username,
+    message: msg,
+    timeStamp: new Date().toISOString(),
+  };
+  db.chatLog(log)
+    .then((res) => {
+      console.log(res);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+}
+
 function onConnectedHandler(addr, port) {
   console.log(`* Connected to ${addr}:${port}`);
   db.getEmotes()
@@ -268,8 +385,16 @@ function onConnectedHandler(addr, port) {
     });
   db.getQuotes().then((res) => {
     res.forEach((item) => {
-      console.log(res);
       dbQuotes.push(item.quote);
     });
   });
+  db.getModCommands()
+    .then((res) => {
+      res.forEach((item) => {
+        dbModCommands[item.commandName] = item.response;
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 }

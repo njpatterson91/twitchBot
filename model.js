@@ -10,6 +10,10 @@ module.exports = {
   addEmote,
   addQuote,
   getQuotes,
+  chatLog,
+  getTalked,
+  getModCommands,
+  addModCommands,
 };
 
 async function getUserPoints(username) {
@@ -60,4 +64,21 @@ async function getEmotes() {
 
 async function getQuotes() {
   return await db("quotes");
+}
+
+async function chatLog(message) {
+  return await db("chatLog").insert(message);
+}
+
+async function getTalked(username) {
+  let x = await db("chatLog").where("user", username);
+  return x.length;
+}
+
+async function getModCommands() {
+  return await db("modCreateCommand");
+}
+
+async function addModCommands(command) {
+  return await db("modCreateCommand").insert(command);
 }
