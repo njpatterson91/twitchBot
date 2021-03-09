@@ -14,6 +14,7 @@ module.exports = {
   getTalked,
   getModCommands,
   addModCommands,
+  ban,
 };
 
 async function getUserPoints(username) {
@@ -81,4 +82,8 @@ async function getModCommands() {
 
 async function addModCommands(command) {
   return await db("modCreateCommand").insert(command);
+}
+
+async function ban(message) {
+  return await db("bannedUsers").insert(message);
 }

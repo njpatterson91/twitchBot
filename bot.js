@@ -62,6 +62,13 @@ setInterval(function () {
   addPoints(viewers);
 }, 60000);
 
+// setInterval(
+//   function (client) {
+//     client.say(target, "Yeet");
+//   },
+//   [20]
+// );
+
 function onMessageHandler(target, context, msg, self) {
   if (self) {
     return;
@@ -76,6 +83,13 @@ function onMessageHandler(target, context, msg, self) {
   const cmName = msg.trim();
   // const commandNameLower = cmName.toLowerCase();
   const commandName = splitMessageToArr(cmName);
+
+  // setInterval(
+  //   function () {
+  //     client.say(target, "Yeet");
+  //   },
+  //   [2000]
+  // );
 
   if (commandName[0] == "!addEmote") {
     if (context.mod == true || context.badges.broadcaster == 1) {
@@ -143,14 +157,14 @@ function onMessageHandler(target, context, msg, self) {
     console.log(dbModCommands["hello"]);
   }
 
-  if (commandName[0])
-    if (commandName[0] == "!emote") {
-      let leNum = commandName[1];
-      let leMojiesBruv = emojiSTORM(leNum);
-      let toSay = leMojiesBruv.join(" ");
-      client.say(target, `${toSay}`);
-      console.log(context);
-    }
+  // if (commandName[0])
+  if (commandName[0] == "!emote") {
+    let leNum = commandName[1];
+    let leMojiesBruv = emojiSTORM(leNum);
+    let toSay = leMojiesBruv.join(" ");
+    client.say(target, `${toSay}`);
+    console.log(context);
+  }
 
   if (commandName[0] == "!quote") {
     let x = quoteRoll();
@@ -174,6 +188,28 @@ function onMessageHandler(target, context, msg, self) {
   if (commandName[0] == "!clear") {
     if (context.mod == true || context.badges.broadcaster == 1) {
       client.say(target, `/clear`);
+    } else {
+      client.say(target, `You are not a mod!`);
+    }
+  }
+
+  if (commandName[0] == "!ban") {
+    if (context.mod == true || context.badges.broadcaster == 1) {
+      let banInfo = {
+        username: commandName[1],
+        bannedBy: context.username,
+        reason: commandName.join(" "),
+        time: new Date().toISOString(),
+      };
+      db.ban(banInfo)
+        .then((res) => {
+          client.say(target, `/ban ${commandName[0]}`);
+          console.log(`banned ${commandName[1]}`);
+        })
+        .catch((err) => {
+          console.log(err);
+          client.say(target, `@${context.username} ban failed!`);
+        });
     } else {
       client.say(target, `You are not a mod!`);
     }
