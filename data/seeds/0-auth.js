@@ -9,6 +9,7 @@ exports.seed = function (knex) {
         { id: 2, name: "password", value: "" },
         { id: 3, name: "channel", value: "" },
         { id: 4, name: "weather", value: "" },
+        { id: 5, name: "location", value: "" },
       ]);
     });
 };

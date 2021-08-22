@@ -15,6 +15,7 @@ module.exports = {
   getModCommands,
   addModCommands,
   ban,
+  setPoints,
 };
 
 async function getUserPoints(username) {
@@ -40,11 +41,21 @@ async function giveUserPoints(points, username) {
   } else {
     let newPoints = {
       username: username,
-      points: x.points + points,
+      points: parseInt(x.points) + parseInt(points),
       watchTime: x.watchTime + 1,
     };
     await db("users").where("username", username).update(newPoints);
   }
+}
+async function setPoints(points, username) {
+  let x = await db("users").where("username", username).first();
+  let newPoints = {
+    username: username,
+    points: parseInt(points),
+    watchTime: x.watchTime,
+  };
+  console.log(points, username);
+  await db("users").where("username", username).update(newPoints);
 }
 
 async function getWatchTime(username) {
