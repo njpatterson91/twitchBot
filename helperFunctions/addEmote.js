@@ -1,6 +1,6 @@
 const db = require("../model");
 
-function addEmote(context, commandName) {
+function addEmote(context, commandName, dbEmotes) {
   if (context.mod == true || context.badges.broadcaster == 1) {
     let toInsert = { emote: commandName[1] };
     db.addEmote(toInsert)

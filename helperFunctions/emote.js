@@ -1,6 +1,6 @@
-const emojiStorm = require("./emojiStorm");
+const emojiSTORM = require("./emojiStorm");
 
-function emote(client, target) {
+function emote(client, target, commandName) {
   let leNum = commandName[1];
   let leMojiesBruv = emojiSTORM(leNum);
   let toSay = leMojiesBruv.join(" ");
